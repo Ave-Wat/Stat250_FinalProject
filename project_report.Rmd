@@ -1,0 +1,54 @@
+---
+title: "Olympic Track and Field Results Analysis"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mosaic)
+library(tidyverse)
+```
+
+```{r}
+#import data
+data <- read.csv("results.csv")
+```
+
+## Introduction
+
+## Methodology
+
+## Results
+
+```{r}
+#compile distance event data
+EAfrican_countries <-c("ETH", "KEN", "UGA")
+events_men <- c("10000M Men", "5000M Men,", "Marathon Men", "3000M Steeplechase Men")
+events_women <- c("10000M Women", "5000M Women,", "Marathon Women", "3000M Steeplechase Women")
+events_all <- append(events_men, events_women)
+distance_men <- data %>% filter(Event %in% events_men & Year >= 1956)
+distance_women <- data %>% filter(Event %in% events_women & Year >= 1956)
+east_african_all <- data %>% filter(Nationality %in% EAfrican_countries)
+east_afr_distance <- east_african_all %>% filter(Event %in% events_all & Year >= 1956)
+```
+
+```{r}
+#EDA
+gf_bar(~fct_infreq(Nationality), data = distance_men, xlab="Country", ylab="No. of medals", title="Olympic Men's Track Distance Medals by Country, 1956-2016")
+gf_bar(~fct_infreq(Nationality), data = distance_women, xlab="Country", ylab="No. of medals", title="Olympic Women's Track Distance Medals by Country, 1956-2016")
+tally(~Event, data = east_african_all)
+```
+
+```{r}
+#Permutation test
+obs <- east_afr_distance
+N <- 10^5
+result <- numeric(N)
+for (i in 1:N){
+  index <- sample(length(data), size=length(east_african_all), replace=False)
+  result[i] <- data[index] # note: need to implement count func; count will find country w/ greatest num of medal winners in data[index], and return that num
+}
+p-val(sum(result >= obs) + 1)/(N+1)
+
+```
+## Discussion
