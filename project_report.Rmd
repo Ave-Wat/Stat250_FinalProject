@@ -1,5 +1,6 @@
 ---
 title: "Olympic Track and Field Results Analysis"
+authors: Ben Aoki-Sherwood, Aravindh Subramanian, and Avery Watts
 output: pdf_document
 ---
 
@@ -7,6 +8,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(mosaic)
 library(tidyverse)
+library(dplyr)
 ```
 
 ```{r}
@@ -23,13 +25,18 @@ data <- read.csv("results.csv")
 ```{r}
 #compile distance event data
 EAfrican_countries <-c("ETH", "KEN", "UGA")
-events_men <- c("10000M Men", "5000M Men,", "Marathon Men", "3000M Steeplechase Men")
-events_women <- c("10000M Women", "5000M Women,", "Marathon Women", "3000M Steeplechase Women")
-events_all <- append(events_men, events_women)
-distance_men <- data %>% filter(Event %in% events_men & Year >= 1956)
-distance_women <- data %>% filter(Event %in% events_women & Year >= 1956)
+distance_events_men <- c("10000M Men", "5000M Men,", "Marathon Men", "3000M Steeplechase Men")
+distance_events_women <- c("10000M Women", "5000M Women,", "Marathon Women", "3000M Steeplechase Women")
+distance_events_all <- append(distance_events_men, distance_events_women)
+distance_men <- data %>% filter(Event %in% distance_events_men & Year >= 1956)
+distance_women <- data %>% filter(Event %in% distance_events_women & Year >= 1956)
 east_african_all <- data %>% filter(Nationality %in% EAfrican_countries)
-east_afr_distance <- east_african_all %>% filter(Event %in% events_all & Year >= 1956)
+east_afr_distance <- east_african_all %>% filter(Event %in% distance_events_all & Year >= 1956)
+sprint_events_men <- c("100M Men", "110M Hurdles Men", "200M Men", "400M Hurdles Men", "400M Men", "4X100M Relay Men", "4X400M Relay Men", "High Jump Men", "Triple Jump Men", "Long Jump Men")
+sprint_events_women <- c("100M Women", "100M Hurdles Women", "200M Women", "400M Hurdles Women", "400M Women", "4X100M Relay Women", "4X400M Relay Women", "High Jump Women", "Triple Jump Women", "Long Jump Women")
+sprint_events_all <- append(sprint_events_women, sprint_events_men)
+american_all <- data %>% filter(Nationality == "USA")
+american_sprints <- american_all %>% filter(Event %in% sprint_events_all)
 ```
 
 ```{r}
@@ -41,14 +48,20 @@ tally(~Event, data = east_african_all)
 
 ```{r}
 #Permutation test
-obs <- east_afr_distance
-N <- 10^5
-result <- numeric(N)
-for (i in 1:N){
-  index <- sample(length(data), size=length(east_african_all), replace=False)
-  result[i] <- data[index] # note: need to implement count func; count will find country w/ greatest num of medal winners in data[index], and return that num
+permutation_test <- function(population, n, events, obs, start_year){
+  N <- 10^5
+  result <- numeric(N)
+  for (i in 1:1){
+    index <- sample(length(population), size=n, replace=FALSE) #sample from the population the size of all medals won by group of interest
+    result[i] <- length(population[index] %>% filter(Event %in% events)) #number of medals won in "events" by any country
+  }
+  p_val <- (sum(result >= obs) + 1)/(N+1)
+  p_val
 }
-p-val(sum(result >= obs) + 1)/(N+1)
+"Likelihood number of distance medals won by East Africans was by chance:"
+permutation_test(data %>% filter(Year >= 1956), length(east_african_all), distance_events_all, length(east_afr_distance), 1956)
+"Likelihood number of sprint medals won by Americans was by chance:"
+permutation_test(data, length(american_all), sprint_events_all, length(american_sprints), 1896)
 
 ```
 ## Discussion
