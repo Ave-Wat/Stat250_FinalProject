@@ -48,20 +48,25 @@ tally(~Event, data = east_african_all)
 
 ```{r}
 #Permutation test
+#params: dataframe population, int n, list events, int obs, int start_year
 permutation_test <- function(population, n, events, obs, start_year){
   N <- 10^5
   result <- numeric(N)
-  for (i in 1:1){
-    index <- sample(length(population), size=n, replace=FALSE) #sample from the population the size of all medals won by group of interest
-    result[i] <- length(population[index] %>% filter(Event %in% events)) #number of medals won in "events" by any country
+  for (i in 1:N){
+    index <- sample(nrow(population), size=n, replace=FALSE) #sample from the population the size of all medals won by group of interest
+    filter_pop <- population[index,] %>% filter(Event %in% events)
+    result[i] <- nrow(filter_pop) #number of medals won in "events" by any country
   }
   p_val <- (sum(result >= obs) + 1)/(N+1)
   p_val
 }
+
 "Likelihood number of distance medals won by East Africans was by chance:"
-permutation_test(data %>% filter(Year >= 1956), length(east_african_all), distance_events_all, length(east_afr_distance), 1956)
+post_1956 <- data %>% filter(Year >= 1956)
+permutation_test(post_1956, nrow(east_african_all), distance_events_all, nrow(east_afr_distance), 1956)
 "Likelihood number of sprint medals won by Americans was by chance:"
-permutation_test(data, length(american_all), sprint_events_all, length(american_sprints), 1896)
+permutation_test(data, nrow(american_all), sprint_events_all, nrow(american_sprints), 1896)
+
 
 ```
 ## Discussion
